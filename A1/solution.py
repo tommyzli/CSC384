@@ -22,7 +22,7 @@ def heur_displaced(state):
     for box in state.boxes:
         if box not in state.storage:
             count += 1
-        return count
+    return count
 
 
 def heur_manhattan_distance(state):
@@ -36,7 +36,19 @@ def heur_manhattan_distance(state):
     # When calculating distances, assume there are no obstacles on the grid and that several boxes can fit in one storage bin.
     # You should implement this heuristic function exactly, even if it is tempting to improve it.
     # Your function should return a numeric value; this is the estimate of the distance to the goal.
-    return 0
+    total_cost = 0
+    for box in state.boxes:
+        if state.restrictions:
+            possible_storages = state.restrictions[state.boxes[box]]
+        else:
+            possible_storages = list(state.storage.keys())
+
+        min_distance = float('inf')
+        for storage in possible_storages:
+            distance_to_storage = abs(box[0] - storage[0]) + abs(box[1] - storage[1])
+            min_distance = min(min_distance, distance_to_storage)
+        total_cost += min_distance
+    return total_cost
 
 
 def heur_alternate(state):
