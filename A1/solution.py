@@ -26,7 +26,6 @@ def heur_displaced(state):
 
 
 def heur_manhattan_distance(state):
-    # IMPLEMENT
     '''admissible sokoban heuristic: manhattan distance'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
@@ -56,10 +55,24 @@ def heur_alternate(state):
     '''a better sokoban heuristic'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
-    # heur_manhattan_distance has flaws.
-    # Write a heuristic function that improves upon heur_manhattan_distance to estimate distance between the current state and the goal.
-    # Your function should return a numeric value for the estimate of the distance to the goal.
-    return 0
+    # This heuristic is similar to the manhattan distance, except it makes sure not to insert more than one box into each storage
+    total_cost = 0
+    used_storages = []
+    for box in state.boxes:
+        if state.restrictions:
+            possible_storages = state.restrictions[state.boxes[box]]
+        else:
+            possible_storages = list(state.storage.keys())
+
+        min_distance = float('inf')
+        for storage in possible_storages:
+            if storage in used_storages:
+                continue
+            distance_to_storage = abs(box[0] - storage[0]) + abs(box[1] - storage[1])
+            min_distance = min(min_distance, distance_to_storage)
+            used_storages.append(storage)
+        total_cost += min_distance
+    return total_cost
 
 
 def fval_function(sN, weight):
