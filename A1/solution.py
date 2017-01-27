@@ -100,6 +100,35 @@ def anytime_gbfs(initial_state, heur_fn, timebound=10):
     '''Provides an implementation of anytime greedy best-first search, as described in the HW1 handout'''
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False'''
+    optimal_solution = False
+
+    search_engine = SearchEngine(strategy="best_first")
+    search_engine.init_search(initial_state, sokoban_goal_state)
+    min_gval = float("inf")
+    found_new_min_gval = False
+    remaining_time = timebound
+    while True:
+        if min_gval == float("inf"):
+            costbound = None
+        else:
+            costbound = (min_gval, float("inf"), float("inf"))
+        solution = search_engine.search(costbound=costbound, timebound=remaining_time)
+        remaining_time = timebound - os.times()[0]
+        if remaining_time <= 0:
+            return optimal_solution
+
+        if not solution:
+            if found_new_min_gval:
+                # previously found a new min value, but adding a costbound did result in a new solution
+                return optimal_solution
+            found_new_min_gval = False
+        elif solution.gval < min_gval:
+            found_new_min_gval = True
+            min_gval = solution.gval
+            optimal_solution = solution
+        elif solution.gval == min_gval:
+            # new costbound did not imporve search
+            return solution
     return False
 
 
