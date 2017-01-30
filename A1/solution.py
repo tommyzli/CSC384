@@ -92,7 +92,7 @@ def fval_function(sN, weight):
     # The function must return a numeric f-value.
     # The value will determine your state's position on the Frontier list during a 'custom' search.
     # You must initialize your search engine object as a 'custom' search engine if you supply a custom fval function.
-    return 0
+    return sN.gval + (weight * sN.hval)
 
 
 def anytime_gbfs(initial_state, heur_fn, timebound=10):
@@ -115,6 +115,9 @@ def anytime_gbfs(initial_state, heur_fn, timebound=10):
         solution = search_engine.search(costbound=costbound, timebound=remaining_time)
         remaining_time = timebound - os.times()[0]
         if remaining_time <= 0:
+            # out of time
+            if solution and solution.gval < min_gval:
+                return solution
             return optimal_solution
 
         if not solution:
@@ -127,8 +130,9 @@ def anytime_gbfs(initial_state, heur_fn, timebound=10):
             min_gval = solution.gval
             optimal_solution = solution
         elif solution.gval == min_gval:
-            # new costbound did not imporve search
+            # new costbound did not improve search
             return solution
+
     return False
 
 
@@ -137,6 +141,10 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
     '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False'''
+    weight = 1
+    wrapped_fval = (lambda sN: fval_function(sN, weight))
+    search_engine = SearchEngine(strategy="custom")
+    search_engine.init_search(initial_state, sokoban_goal_state, fval_function=wrapped_fval)
     return False
 
 
