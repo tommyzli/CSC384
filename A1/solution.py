@@ -105,7 +105,6 @@ def anytime_gbfs(initial_state, heur_fn, timebound=10):
     search_engine = SearchEngine(strategy="best_first")
     search_engine.init_search(initial_state, sokoban_goal_state)
     min_gval = float("inf")
-    found_new_min_gval = False
     remaining_time = timebound
 
     while remaining_time > 0:
@@ -118,7 +117,6 @@ def anytime_gbfs(initial_state, heur_fn, timebound=10):
         end_time = os.times()[0]
 
         if solution and solution.gval < min_gval:
-            found_new_min_gval = True
             min_gval = solution.gval
             optimal_solution = solution
 
@@ -132,11 +130,26 @@ def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
     '''Provides an implementation of anytime weighted a-star, as described in the HW1 handout'''
     '''INPUT: a sokoban state that represents the start state and a timebound (number of seconds)'''
     '''OUTPUT: A goal state (if a goal is found), else False'''
-    weight = 1
+    min_gval = float("inf")
+    optimal_solution = False
+
     wrapped_fval = (lambda sN: fval_function(sN, weight))
     search_engine = SearchEngine(strategy="custom")
     search_engine.init_search(initial_state, sokoban_goal_state, fval_function=wrapped_fval)
-    return False
+    remaining_time = timebound
+
+    while remaining_time > 0:
+        start_time = os.times()[0]
+        solution = search_engine.search(costbound=None, timebound=remaining_time)
+        end_time = os.times()[0]
+
+        if solution and solution.gval < min_gval:
+            min_gval = solution.gval
+            optimal_solution = solution
+
+        remaining_time = remaining_time - (end_time - start_time)
+
+    return optimal_solution
 
 
 if __name__ == "__main__":
