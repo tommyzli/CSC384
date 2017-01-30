@@ -107,33 +107,24 @@ def anytime_gbfs(initial_state, heur_fn, timebound=10):
     min_gval = float("inf")
     found_new_min_gval = False
     remaining_time = timebound
-    while True:
+
+    while remaining_time > 0:
         if min_gval == float("inf"):
             costbound = None
         else:
             costbound = (min_gval, float("inf"), float("inf"))
+        start_time = os.times()[0]
         solution = search_engine.search(costbound=costbound, timebound=remaining_time)
-        remaining_time = timebound - os.times()[0]
-        if remaining_time <= 0:
-            # out of time
-            if solution and solution.gval < min_gval:
-                return solution
-            return optimal_solution
+        end_time = os.times()[0]
 
-        if not solution:
-            if found_new_min_gval:
-                # previously found a new min value, but adding a costbound did result in a new solution
-                return optimal_solution
-            found_new_min_gval = False
-        elif solution.gval < min_gval:
+        if solution and solution.gval < min_gval:
             found_new_min_gval = True
             min_gval = solution.gval
             optimal_solution = solution
-        elif solution.gval == min_gval:
-            # new costbound did not improve search
-            return solution
 
-    return False
+        remaining_time = remaining_time - (end_time - start_time)
+
+    return optimal_solution
 
 
 def anytime_weighted_astar(initial_state, heur_fn, weight=1., timebound=10):
