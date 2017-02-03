@@ -61,6 +61,7 @@ def heur_alternate(state):
     obstacles.update(state.obstacles)
 
     total_cost = 0
+    multiplier = 1
     for box in state.boxes:
         if state.restrictions:
             possible_storages = state.restrictions[state.boxes[box]]
@@ -76,9 +77,10 @@ def heur_alternate(state):
                 (box[0], box[1] + 1),
                 (box[0], box[1] - 1),
             }
-            if len(around_box.intersection(obstacles)) >= 2:
+            number_of_intersections = len(around_box.intersection(obstacles))
+            if number_of_intersections >= 2:
                 # if box is surrounded by 2 or more obstacles
-                return float('inf')
+                multiplier += number_of_intersections * 10000
 
         min_distance = float('inf')
         for storage in possible_storages:
@@ -87,7 +89,7 @@ def heur_alternate(state):
             min_distance = min(min_distance, max(euclidean_distance_to_storage, manhattan_distance_to_storage))
         total_cost += min_distance
 
-    return total_cost
+    return total_cost * multiplier
 
 
 def fval_function(sN, weight):

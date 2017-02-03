@@ -6,6 +6,7 @@ gained isn't worth the drop in speed.
 3. Use sets rather than lists when you don't need to access specific items. They
 are much faster for checking membership.
 
-4.
+4. Don't return the same high value for each worst-case/deadlock situation. The return value
+should depend on just 'how' bad the state is
 
 5.
