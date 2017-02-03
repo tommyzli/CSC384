@@ -56,20 +56,8 @@ def heur_alternate(state):
     '''a better sokoban heuristic'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
+    corners = {(0, 0), (0, state.height), (state.width, 0), (state.width, state.height)}
     total_cost = 0
-    for box in state.boxes:
-        if state.restrictions:
-            possible_storages = state.restrictions[state.boxes[box]]
-        else:
-            possible_storages = list(state.storage.keys())
-
-        min_distance = float('inf')
-        for storage in possible_storages:
-            # calculate euclidean distance
-            distance_to_storage = math.sqrt(math.pow(abs(box[0] - storage[0]), 2) + math.pow(abs(box[1] - storage[1]), 2))
-            min_distance = min(min_distance, distance_to_storage)
-        total_cost += min_distance
-
     for box in state.boxes:
         if state.restrictions:
             possible_storages = state.restrictions[state.boxes[box]]
@@ -78,9 +66,16 @@ def heur_alternate(state):
 
         if box in possible_storages:
             continue
-        elif box in [(0, 0), (0, state.height), (state.width, 0), (state.width, state.height)]:
+        elif box in corners:
             # the box is stuck in a corner that is not a storage space
-            total_cost = float('inf')
+            return float('inf')
+
+        min_distance = float('inf')
+        for storage in possible_storages:
+            euclidean_distance_to_storage = math.sqrt((box[0] - storage[0]) ** 2 + (box[1] - storage[1]) ** 2)
+            manhattan_distance_to_storage = abs(box[0] - storage[0]) + abs(box[1] - storage[1])
+            min_distance = min(min_distance, max(euclidean_distance_to_storage, manhattan_distance_to_storage))
+        total_cost += min_distance
 
     return total_cost
 

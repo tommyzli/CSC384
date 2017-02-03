@@ -3,7 +3,8 @@ gained isn't worth the drop in speed.
 
 2. Look for worst-case/deadlock situations and make the heuristic punish them.
 
-3.
+3. Use sets rather than lists when you don't need to access specific items. They
+are much faster for checking membership.
 
 4.
 
