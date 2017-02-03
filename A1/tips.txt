@@ -1,6 +1,7 @@
-1.
+1. Don't make your heuristics too computationally costly. Otherwise the accuracy
+gained isn't worth the drop in speed.
 
-2.
+2. Look for worst-case/deadlock situations and make the heuristic punish them.
 
 3.
 
