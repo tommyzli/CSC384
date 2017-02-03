@@ -8,6 +8,7 @@
 
 # import os for time functions
 import os
+import math
 from search import *  # for search engines
 from sokoban import SokobanState, Direction, PROBLEMS, sokoban_goal_state  # for Sokoban specific classes and problems
 
@@ -55,9 +56,7 @@ def heur_alternate(state):
     '''a better sokoban heuristic'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
-    # This heuristic is similar to the manhattan distance, except it makes sure not to insert more than one box into each storage
     total_cost = 0
-    used_storages = []
     for box in state.boxes:
         if state.restrictions:
             possible_storages = state.restrictions[state.boxes[box]]
@@ -66,12 +65,23 @@ def heur_alternate(state):
 
         min_distance = float('inf')
         for storage in possible_storages:
-            if storage in used_storages:
-                continue
-            distance_to_storage = abs(box[0] - storage[0]) + abs(box[1] - storage[1])
+            # calculate euclidean distance
+            distance_to_storage = math.sqrt(math.pow(abs(box[0] - storage[0]), 2) + math.pow(abs(box[1] - storage[1]), 2))
             min_distance = min(min_distance, distance_to_storage)
-            used_storages.append(storage)
         total_cost += min_distance
+
+    for box in state.boxes:
+        if state.restrictions:
+            possible_storages = state.restrictions[state.boxes[box]]
+        else:
+            possible_storages = list(state.storage.keys())
+
+        if box in possible_storages:
+            continue
+        elif box in [(0, 0), (0, state.height), (state.width, 0), (state.width, state.height)]:
+            # the box is stuck in a corner that is not a storage space
+            total_cost = float('inf')
+
     return total_cost
 
 
