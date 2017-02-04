@@ -43,11 +43,11 @@ def heur_manhattan_distance(state):
         else:
             possible_storages = list(state.storage.keys())
 
-        min_distance = float('inf')
-        for storage in possible_storages:
-            distance_to_storage = abs(box[0] - storage[0]) + abs(box[1] - storage[1])
-            min_distance = min(min_distance, distance_to_storage)
-        total_cost += min_distance
+        storage_distances = [
+            abs(box[0] - storage[0]) + abs(box[1] - storage[1])
+            for storage in possible_storages
+        ]
+        total_cost += min(storage_distances)
     return total_cost
 
 
@@ -66,7 +66,7 @@ def heur_alternate(state):
         if state.restrictions:
             possible_storages = state.restrictions[state.boxes[box]]
         else:
-            possible_storages = set(state.storage.keys())
+            possible_storages = list(state.storage.keys())
 
         if box in possible_storages:
             continue
@@ -80,14 +80,13 @@ def heur_alternate(state):
             number_of_intersections = len(around_box.intersection(obstacles))
             if number_of_intersections >= 2:
                 # if box is surrounded by 2 or more obstacles
-                multiplier += number_of_intersections * 10000
+                multiplier += number_of_intersections * 9999
 
-        min_distance = float('inf')
-        for storage in possible_storages:
-            euclidean_distance_to_storage = math.sqrt((box[0] - storage[0]) ** 2 + (box[1] - storage[1]) ** 2)
-            manhattan_distance_to_storage = abs(box[0] - storage[0]) + abs(box[1] - storage[1])
-            min_distance = min(min_distance, max(euclidean_distance_to_storage, manhattan_distance_to_storage))
-        total_cost += min_distance
+        storage_distances = [
+            abs(box[0] - storage[0]) + abs(box[1] - storage[1])
+            for storage in possible_storages
+        ]
+        total_cost += min(storage_distances)
 
     return total_cost * multiplier
 
