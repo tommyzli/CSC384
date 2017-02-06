@@ -9,4 +9,5 @@ are much faster for checking membership.
 4. Don't return the same high value for each worst-case/deadlock situation. The return value
 should depend on just 'how' bad the state is
 
-5.
+5. Cache outputs of expensive operations. Not needing to recompute certain variables saves
+a lot of processing time.

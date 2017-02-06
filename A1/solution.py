@@ -51,14 +51,20 @@ def heur_manhattan_distance(state):
     return total_cost
 
 
+obstacles = None
+
+
 def heur_alternate(state):
     # IMPLEMENT
     '''a better sokoban heuristic'''
     '''INPUT: a sokoban state'''
     '''OUTPUT: a numeric value that serves as an estimate of the distance of the state to the goal.'''
-    obstacles = {tup for y in range(-1, state.height) for tup in ((state.width, y), (-1, y))}
-    obstacles.update({tup for x in range(-1, state.width) for tup in ((x, -1), (x, state.height))})
-    obstacles.update(state.obstacles)
+    global obstacles
+
+    if not obstacles or not state.obstacles.issubset(obstacles):
+        obstacles = {tup for y in range(-1, state.height) for tup in ((state.width, y), (-1, y))}
+        obstacles.update({tup for x in range(-1, state.width) for tup in ((x, -1), (x, state.height))})
+        obstacles.update(state.obstacles)
 
     total_cost = 0
     multiplier = 1
@@ -83,7 +89,7 @@ def heur_alternate(state):
                 multiplier += number_of_intersections * 9999
 
         storage_distances = [
-            abs(box[0] - storage[0]) + abs(box[1] - storage[1])
+            math.sqrt((box[0] - storage[0]) ** 2 + (box[1] - storage[1]) ** 2)
             for storage in possible_storages
         ]
         total_cost += min(storage_distances)
