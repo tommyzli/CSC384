@@ -63,15 +63,14 @@ def heur_alternate(state):
     global obstacles
     global walls
 
-    all_storages = list(state.storage.keys())
     if not obstacles or not state.obstacles.issubset(obstacles):
         walls = {tup for y in range(-1, state.height) for tup in ((state.width, y), (-1, y))}
         walls.update({tup for x in range(-1, state.width) for tup in ((x, -1), (x, state.height))})
         obstacles = walls.union(state.obstacles)
 
     total_cost = 0
-    multiplier = 1
     for box in state.boxes:
+        multiplier = 1
         if state.restrictions:
             possible_storages = state.restrictions[state.boxes[box]]
         else:
@@ -94,13 +93,13 @@ def heur_alternate(state):
             # if box is along a wall and no possible storages are on that same wall
             if box[0] in {-1, state.width}:
                 storages_along_wall = {
-                    storage for storage in all_storages if storage[0] == box[0]
+                    storage for storage in possible_storages if storage[0] == box[0]
                 }
                 if not storages_along_wall:
                     multiplier += 9999
             if box[1] in {-1, state.height}:
                 storages_along_wall = {
-                    storage for storage in all_storages if storage[1] == box[1]
+                    storage for storage in possible_storages if storage[1] == box[1]
                 }
                 if not storages_along_wall:
                     multiplier += 9999
@@ -109,9 +108,9 @@ def heur_alternate(state):
             math.sqrt((box[0] - storage[0]) ** 2 + (box[1] - storage[1]) ** 2)
             for storage in possible_storages
         ]
-        total_cost += min(storage_distances)
+        total_cost += min(storage_distances) * multiplier
 
-    return total_cost * multiplier
+    return total_cost
 
 
 def fval_function(sN, weight):
