@@ -120,10 +120,10 @@ def prop_GAC(csp, newVar=None):
        processing all constraints. Otherwise we do GAC enforce with
        constraints containing newVar on GAC Queue'''
     constraints = csp.get_all_cons()
-    pruned_vals = []
     if newVar:
         constraints = csp.get_cons_with_var(newVar)
 
+    pruned_vals = []
     while constraints:
         constraint = constraints.pop(0)
 
