@@ -66,6 +66,31 @@ def tenner_csp_model_1(initial_tenner_board):
        column.
     '''
     # IMPLEMENT
+    domain = list(range(0, 10))
+    grid = initial_tenner_board[0]
+    last_row = initial_tenner_board[1]
+    variables = []
+
+    x = 0
+    y = 0
+    for row in grid:
+        for value in row:
+            # variables are named by their xy coordinates
+            if value != -1:
+                var = Variable("{}{}".format(x, y), domain=[value])
+                var.assign(value)
+            else:
+                var = Variable("{}{}".format(x, y), domain=domain)
+
+            variables.append(var)
+            x = x + 1
+        y = y + 1
+
+    # construct constraints
+
+    csp = CSP("TennerCSP", vars=variables)
+
+    return csp, variables
 
 ##############################
 
