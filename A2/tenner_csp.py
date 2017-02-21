@@ -123,7 +123,22 @@ def tenner_csp_model_2(initial_tenner_board):
        all-different constraints between the relevant variables.
     '''
     # IMPLEMENT
-    return None, []
+    domain = list(range(0, 10))
+    grid = initial_tenner_board[0]
+    last_row = initial_tenner_board[1]
+    variables = create_variables(grid, domain)
+    flat_variables = [x for y in variables for x in y]
+
+    csp = CSP("TennerCSP", vars=flat_variables)
+
+    '''
+    constraints = create_model_2_constraints(variables, last_row)
+
+    for constraint in constraints:
+        csp.add_constraint(constraint)
+    '''
+
+    return csp, variables
 
 
 def create_variables(grid, domain):
@@ -161,11 +176,50 @@ def create_model_1_constraints(variable_matrix, sum_row):
             surrounding_variables = get_surrounding_variables(variable_matrix, x, y)
             constraints.extend(create_binary_constraint(variable, surrounding_variables))
 
+    for x, _ in enumerate(variable_matrix[0]):
         # create column sum constraints
         expected_sum = sum_row[x]
         constraints.append(create_column_sum_constraint(variable_matrix, x, expected_sum))
 
     return constraints
+
+
+def create_model_2_constraints(variable_matrix, sum_row):
+    constraints = []
+    for x, row in enumerate(variable_matrix):
+        # create row constraints
+        constraints.append(create_all_diff_constraint(row))
+
+        for y, variable in enumerate(row):
+            # create contiguous cell constraints
+            surrounding_variables = get_surrounding_variables(variable_matrix, x, y)
+            constraints.append(create_all_diff_constraint(surrounding_variables))
+
+    for x, _ in enumerate(variable_matrix[0]):
+        # create column sum constraints
+        expected_sum = sum_row[x]
+        constraints.append(create_column_sum_constraint(variable_matrix, x, expected_sum))
+
+    return constraints
+
+
+def create_all_diff_constraint(variables):
+    constraint = Constraint("Cons_{}".format(":".join([v.name for v in variables])), variables)
+
+    assigned_values = [var.get_assigned_value() for var in variables if var.is_assigned()]
+    if not assigned_values:
+        satisfying_tuples = list(itertools.permutations(range(0, 10)))
+    else:
+        domains = [v.domain() for v in variables]
+        pruned_domains = [
+            [d for d in dom if d not in assigned_values] if len(dom) > 1 else dom
+            for dom in domains
+        ]
+        satisfying_tuples = list(itertools.product(*pruned_domains))
+
+    constraint.add_satisfying_tuples(satisfying_tuples)
+
+    return constraint
 
 
 def create_column_sum_constraint(variable_matrix, x, expected_sum):
@@ -176,7 +230,7 @@ def create_column_sum_constraint(variable_matrix, x, expected_sum):
     satisfying_tuples = [
         tup
         for tup in satisfying_tuples
-        if len(set(tup)) > 1
+        if sum(tup) == expected_sum
     ]
 
     constraint.add_satisfying_tuples(satisfying_tuples)
