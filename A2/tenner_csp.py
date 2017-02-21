@@ -69,26 +69,14 @@ def tenner_csp_model_1(initial_tenner_board):
     domain = list(range(0, 10))
     grid = initial_tenner_board[0]
     last_row = initial_tenner_board[1]
-    variables = []
+    variables = create_variables(grid)
 
-    x = 0
-    y = 0
-    for row in grid:
-        for value in row:
-            # variables are named by their xy coordinates
-            if value != -1:
-                var = Variable("{}{}".format(x, y), domain=[value])
-                var.assign(value)
-            else:
-                var = Variable("{}{}".format(x, y), domain=domain)
-
-            variables.append(var)
-            x = x + 1
-        y = y + 1
-
-    # construct constraints
+    constraints = create_model_1_constraints(grid, last_row)
 
     csp = CSP("TennerCSP", vars=variables)
+
+    for constraint in constraints:
+        csp.add_constraint(constraint)
 
     return csp, variables
 
@@ -134,3 +122,92 @@ def tenner_csp_model_2(initial_tenner_board):
        all-different constraints between the relevant variables.
     '''
     # IMPLEMENT
+    return None, []
+
+
+def create_variables(grid):
+    variables = []
+    x = 0
+    for row in grid:
+        y = 0
+        row = []
+        for value in row:
+            # variables are named by their xy coordinates
+            if value != -1:
+                var = Variable("{}{}".format(x, y), domain=[value])
+                var.assign(value)
+            else:
+                var = Variable("{}{}".format(x, y), domain=domain)
+
+            row.append(var)
+            y = y + 1
+        variables.append(row)
+        x = x + 1
+
+    return variables
+
+
+def create_model_1_constraints(variable_matrix, sum_row):
+    constraints = []
+    for x, row in enumerate(variable_matrix):
+
+        for y, variable in enumerate(row):
+            # create row constraints
+            rest = row[:y] + row[(y + 1):]
+            constraints.extend(create_binary_constraint(variable, rest))
+
+            # create contiguous cell constraints
+            surrounding_variables = get_surrounding_variables(variable_matrix, x, y)
+            constraints.extend(create_binary_constraint(variable, surrounding_variables))
+
+        # create column sum constraints
+        expected_sum = sum_row[x]
+        constraints.extend(create_column_sum_constraint(variable_matrix, x, expected_sum))
+
+    return constraints
+
+
+def create_column_sum_constraint(variable_matrix, x, expected_sum):
+    constraints = []
+    column_variables = [row[x] for row in variable_matrix]
+
+    return constraints
+
+
+def get_surrounding_variables(variable_matrix, x, y):
+    surrounding_variables = []
+    for i in range(x - 1, x + 2):
+        for j in range(y - 1, y + 2):
+            # skip out of range indexes
+            if i < 0 or j < 0:
+                continue
+            if i >= len(variable_matrix):
+                continue
+            if j >= len(variable_matrix[i]):
+                continue
+
+            surrounding_variables.append(variable_matrix[i][j])
+
+    return surrounding_variables
+
+
+def create_binary_constraint(variable, rest):
+    '''
+    creates constraints between variable and all the variables in rest
+    '''
+    constraints = []
+    for var in rest:
+        constraint = Constraint("Cons_{}:{}".format(variable.name, var.name), [variable, var])
+
+        satisfying_tuples = list(itertools.product(variable.domain(), var.domain()))
+        satisfying_tuples = [
+            tup 
+            for tup in satisfying_tuples
+            if tup[0] != tup[1]
+        ]
+
+        constraint.add_satisfying_tuples(satisfying_tuples)
+
+        constraints.append(constraint)
+
+    return constraints
