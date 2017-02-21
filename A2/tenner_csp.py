@@ -69,11 +69,12 @@ def tenner_csp_model_1(initial_tenner_board):
     domain = list(range(0, 10))
     grid = initial_tenner_board[0]
     last_row = initial_tenner_board[1]
-    variables = create_variables(grid)
+    variables = create_variables(grid, domain)
+    flat_variables = [x for y in variables for x in y]
 
-    constraints = create_model_1_constraints(grid, last_row)
+    constraints = create_model_1_constraints(variables, last_row)
 
-    csp = CSP("TennerCSP", vars=variables)
+    csp = CSP("TennerCSP", vars=flat_variables)
 
     for constraint in constraints:
         csp.add_constraint(constraint)
@@ -125,12 +126,12 @@ def tenner_csp_model_2(initial_tenner_board):
     return None, []
 
 
-def create_variables(grid):
+def create_variables(grid, domain):
     variables = []
     x = 0
     for row in grid:
         y = 0
-        row = []
+        r = []
         for value in row:
             # variables are named by their xy coordinates
             if value != -1:
@@ -139,9 +140,9 @@ def create_variables(grid):
             else:
                 var = Variable("{}{}".format(x, y), domain=domain)
 
-            row.append(var)
+            r.append(var)
             y = y + 1
-        variables.append(row)
+        variables.append(r)
         x = x + 1
 
     return variables
@@ -162,16 +163,25 @@ def create_model_1_constraints(variable_matrix, sum_row):
 
         # create column sum constraints
         expected_sum = sum_row[x]
-        constraints.extend(create_column_sum_constraint(variable_matrix, x, expected_sum))
+        constraints.append(create_column_sum_constraint(variable_matrix, x, expected_sum))
 
     return constraints
 
 
 def create_column_sum_constraint(variable_matrix, x, expected_sum):
-    constraints = []
     column_variables = [row[x] for row in variable_matrix]
 
-    return constraints
+    constraint = Constraint("Cons_{}".format(x), column_variables)
+    satisfying_tuples = list(itertools.product(*[v.domain() for v in column_variables]))
+    satisfying_tuples = [
+        tup
+        for tup in satisfying_tuples
+        if len(set(tup)) > 1
+    ]
+
+    constraint.add_satisfying_tuples(satisfying_tuples)
+
+    return constraint
 
 
 def get_surrounding_variables(variable_matrix, x, y):
@@ -201,7 +211,7 @@ def create_binary_constraint(variable, rest):
 
         satisfying_tuples = list(itertools.product(variable.domain(), var.domain()))
         satisfying_tuples = [
-            tup 
+            tup
             for tup in satisfying_tuples
             if tup[0] != tup[1]
         ]
