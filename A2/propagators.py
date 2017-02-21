@@ -125,7 +125,7 @@ def prop_GAC(csp, newVar=None):
 
     pruned_vals = []
     while constraints:
-        constraint = constraints.pop(0)
+        constraint = constraints.pop()
 
         for variable in constraint.get_scope():
             for domain_value in variable.cur_domain():
