@@ -131,12 +131,10 @@ def tenner_csp_model_2(initial_tenner_board):
 
     csp = CSP("TennerCSP", vars=flat_variables)
 
-    '''
     constraints = create_model_2_constraints(variables, last_row)
 
     for constraint in constraints:
         csp.add_constraint(constraint)
-    '''
 
     return csp, variables
 
@@ -208,7 +206,7 @@ def create_all_diff_constraint(variables):
 
     assigned_values = [var.get_assigned_value() for var in variables if var.is_assigned()]
     if not assigned_values:
-        satisfying_tuples = list(itertools.permutations(range(0, 10)))
+        satisfying_tuples = list(itertools.product(range(0, 10)))
     else:
         domains = [v.domain() for v in variables]
         pruned_domains = [
@@ -216,6 +214,12 @@ def create_all_diff_constraint(variables):
             for dom in domains
         ]
         satisfying_tuples = list(itertools.product(*pruned_domains))
+
+    satisfying_tuples = [
+        tup
+        for tup in satisfying_tuples
+        if len(set(tup)) == len(tup)
+    ]
 
     constraint.add_satisfying_tuples(satisfying_tuples)
 
