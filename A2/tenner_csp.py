@@ -184,15 +184,19 @@ def create_model_1_constraints(variable_matrix, sum_row):
 
 def create_model_2_constraints(variable_matrix, sum_row):
     constraints = []
+    print("creating row constraints")
     for x, row in enumerate(variable_matrix):
         # create row constraints
         constraints.append(create_all_diff_constraint(row))
+        if x == 0:
+            print("creating surrounding constraints")
 
         for y, variable in enumerate(row):
             # create contiguous cell constraints
             surrounding_variables = get_surrounding_variables(variable_matrix, x, y)
             constraints.append(create_all_diff_constraint(surrounding_variables))
 
+    print("creating sum constraints")
     for x, _ in enumerate(variable_matrix[0]):
         # create column sum constraints
         expected_sum = sum_row[x]
@@ -204,22 +208,11 @@ def create_model_2_constraints(variable_matrix, sum_row):
 def create_all_diff_constraint(variables):
     constraint = Constraint("Cons_{}".format(":".join([v.name for v in variables])), variables)
 
-    assigned_values = [var.get_assigned_value() for var in variables if var.is_assigned()]
-    if not assigned_values:
-        satisfying_tuples = list(itertools.product(range(0, 10)))
-    else:
-        domains = [v.domain() for v in variables]
-        pruned_domains = [
-            [d for d in dom if d not in assigned_values] if len(dom) > 1 else dom
-            for dom in domains
-        ]
-        satisfying_tuples = list(itertools.product(*pruned_domains))
-
-    satisfying_tuples = [
-        tup
-        for tup in satisfying_tuples
-        if len(set(tup)) == len(tup)
-    ]
+    satisfying_tuples = []
+    for tup in itertools.product(*[v.domain() for v in variables]):
+        if len(set(tup)) != len(tup):
+            continue
+        satisfying_tuples.append(tup)
 
     constraint.add_satisfying_tuples(satisfying_tuples)
 
@@ -256,7 +249,7 @@ def get_surrounding_variables(variable_matrix, x, y):
 
             surrounding_variables.append(variable_matrix[i][j])
 
-    return surrounding_variables
+    return list(set(surrounding_variables))
 
 
 def create_binary_constraint(variable, rest):
