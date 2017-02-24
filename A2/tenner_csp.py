@@ -188,24 +188,6 @@ def create_model_2_constraints(variable_matrix, sum_row):
         # create row constraints
         row_domain = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-        '''
-        constrained_variables = [v for v in row if not v.is_assigned()]
-        for variable in row:
-            if variable.is_assigned():
-                row_domain.remove(variable.get_assigned_value())
-
-        constraint = Constraint("Cons_{}".format(":".join([v.name for v in constrained_variables])), constrained_variables)
-
-        satisfying_tuples = set()
-        for tup in itertools.permutations(row_domain):
-            if len(set(tup)) != len(tup):
-                continue
-            satisfying_tuples.add(tup)
-
-        constraint.add_satisfying_tuples(list(satisfying_tuples))
-
-        constraints.append(constraint)
-        '''
         assigned_values = [v.get_assigned_value() for v in row]
         unassigned_values = []
         for val in row_domain:
@@ -276,6 +258,10 @@ def create_column_sum_constraint(variable_matrix, x, expected_sum):
 
 
 def get_surrounding_variables(variable_matrix, x, y):
+    '''
+    given the indexes of an element of a matrix, return the values 
+    surrounding the element at that index, including diagonals
+    '''
     surrounding_variables = []
     for i in range(x - 1, x + 2):
         for j in range(y - 1, y + 2):
