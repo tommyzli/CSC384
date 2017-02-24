@@ -168,11 +168,11 @@ def create_model_1_constraints(variable_matrix, sum_row):
         for y, variable in enumerate(row):
             # create row constraints
             rest = row[:y] + row[(y + 1):]
-            constraints.extend(create_binary_constraint(variable, rest))
+            constraints.extend(create_binary_constraints(variable, rest))
 
             # create contiguous cell constraints
             surrounding_variables = get_surrounding_variables(variable_matrix, x, y)
-            constraints.extend(create_binary_constraint(variable, surrounding_variables))
+            constraints.extend(create_binary_constraints(variable, surrounding_variables))
 
     for x, _ in enumerate(variable_matrix[0]):
         # create column sum constraints
@@ -184,39 +184,79 @@ def create_model_1_constraints(variable_matrix, sum_row):
 
 def create_model_2_constraints(variable_matrix, sum_row):
     constraints = []
-    print("creating row constraints")
     for x, row in enumerate(variable_matrix):
         # create row constraints
-        constraints.append(create_all_diff_constraint(row))
-        if x == 0:
-            print("creating surrounding constraints")
+        row_domain = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
+        '''
+        constrained_variables = [v for v in row if not v.is_assigned()]
+        for variable in row:
+            if variable.is_assigned():
+                row_domain.remove(variable.get_assigned_value())
+
+        constraint = Constraint("Cons_{}".format(":".join([v.name for v in constrained_variables])), constrained_variables)
+
+        satisfying_tuples = set()
+        for tup in itertools.permutations(row_domain):
+            if len(set(tup)) != len(tup):
+                continue
+            satisfying_tuples.add(tup)
+
+        constraint.add_satisfying_tuples(list(satisfying_tuples))
+
+        constraints.append(constraint)
+        '''
+        assigned_values = [v.get_assigned_value() for v in row]
+        unassigned_values = []
+        for val in row_domain:
+            if val not in assigned_values:
+                unassigned_values.append(val)
+
+        constraint = Constraint("Cons_{}".format(":".join([v.name for v in row])), row)
+
+        satisfying_tuples = []
+        for tup in itertools.permutations(unassigned_values):
+            sat_tup = [val for val in assigned_values]
+            for val in tup:
+                sat_tup[sat_tup.index(None)] = val
+
+            satisfying_tuples.append(sat_tup)
+
+        constraint.add_satisfying_tuples(satisfying_tuples)
+        constraints.append(constraint)
+
+    for x, row in enumerate(variable_matrix):
         for y, variable in enumerate(row):
-            # create contiguous cell constraints
             surrounding_variables = get_surrounding_variables(variable_matrix, x, y)
-            constraints.append(create_all_diff_constraint(surrounding_variables))
 
-    print("creating sum constraints")
+            assigned_values = [v.get_assigned_value() for v in surrounding_variables]
+            domain = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+            unassigned_values = []
+            for val in domain:
+                if val not in assigned_values:
+                    unassigned_values.append(val)
+
+            constraint = Constraint("Cons_{}".format(":".join([v.name for v in surrounding_variables])), surrounding_variables)
+
+            satisfying_tuples = []
+            for tup in itertools.permutations(unassigned_values):
+                sat_tup = [val for val in assigned_values]
+                # fill in unassigned values, but dont replace assigned ones
+                for val in tup:
+                    if None in sat_tup:
+                        sat_tup[sat_tup.index(None)] = val
+                    else:
+                        break
+                satisfying_tuples.append(sat_tup)
+
+            constraint.add_satisfying_tuples(satisfying_tuples)
+
     for x, _ in enumerate(variable_matrix[0]):
         # create column sum constraints
         expected_sum = sum_row[x]
         constraints.append(create_column_sum_constraint(variable_matrix, x, expected_sum))
 
     return constraints
-
-
-def create_all_diff_constraint(variables):
-    constraint = Constraint("Cons_{}".format(":".join([v.name for v in variables])), variables)
-
-    satisfying_tuples = []
-    for tup in itertools.product(*[v.domain() for v in variables]):
-        if len(set(tup)) != len(tup):
-            continue
-        satisfying_tuples.append(tup)
-
-    constraint.add_satisfying_tuples(satisfying_tuples)
-
-    return constraint
 
 
 def create_column_sum_constraint(variable_matrix, x, expected_sum):
@@ -252,7 +292,7 @@ def get_surrounding_variables(variable_matrix, x, y):
     return list(set(surrounding_variables))
 
 
-def create_binary_constraint(variable, rest):
+def create_binary_constraints(variable, rest):
     '''
     creates constraints between variable and all the variables in rest
     '''
