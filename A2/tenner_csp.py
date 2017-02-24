@@ -202,6 +202,9 @@ def create_model_2_constraints(variable_matrix, sum_row):
             for val in tup:
                 sat_tup[sat_tup.index(None)] = val
 
+            if len(set(sat_tup)) != len(sat_tup):
+                continue
+
             satisfying_tuples.append(sat_tup)
 
         constraint.add_satisfying_tuples(satisfying_tuples)
@@ -229,6 +232,10 @@ def create_model_2_constraints(variable_matrix, sum_row):
                         sat_tup[sat_tup.index(None)] = val
                     else:
                         break
+
+                if len(set(sat_tup)) != len(sat_tup):
+                    continue
+
                 satisfying_tuples.append(sat_tup)
 
             constraint.add_satisfying_tuples(satisfying_tuples)
