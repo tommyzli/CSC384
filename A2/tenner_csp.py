@@ -239,6 +239,7 @@ def create_model_2_constraints(variable_matrix, sum_row):
                 satisfying_tuples.append(sat_tup)
 
             constraint.add_satisfying_tuples(satisfying_tuples)
+            constraints.append(constraint)
 
     for x, _ in enumerate(variable_matrix[0]):
         # create column sum constraints
