@@ -185,7 +185,7 @@ def create_model_1_constraints(variable_matrix, sum_row):
 def create_model_2_constraints(variable_matrix, sum_row):
     constraints = []
     for x, row in enumerate(variable_matrix):
-        # create row constraints
+        # create n-ary row constraints
         row_domain = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         assigned_values = [v.get_assigned_value() for v in row]
@@ -210,36 +210,10 @@ def create_model_2_constraints(variable_matrix, sum_row):
         constraint.add_satisfying_tuples(satisfying_tuples)
         constraints.append(constraint)
 
-    for x, row in enumerate(variable_matrix):
+        # create contiguous cell constraints
         for y, variable in enumerate(row):
             surrounding_variables = get_surrounding_variables(variable_matrix, x, y)
-
-            assigned_values = [v.get_assigned_value() for v in surrounding_variables]
-            domain = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-            unassigned_values = []
-            for val in domain:
-                if val not in assigned_values:
-                    unassigned_values.append(val)
-
-            constraint = Constraint("Cons_{}".format(":".join([v.name for v in surrounding_variables])), surrounding_variables)
-
-            satisfying_tuples = []
-            for tup in itertools.permutations(unassigned_values):
-                sat_tup = [val for val in assigned_values]
-                # fill in unassigned values, but dont replace assigned ones
-                for val in tup:
-                    if None in sat_tup:
-                        sat_tup[sat_tup.index(None)] = val
-                    else:
-                        break
-
-                if len(set(sat_tup)) != len(sat_tup):
-                    continue
-
-                satisfying_tuples.append(sat_tup)
-
-            constraint.add_satisfying_tuples(satisfying_tuples)
-            constraints.append(constraint)
+            constraints.extend(create_binary_constraints(variable, surrounding_variables))
 
     for x, _ in enumerate(variable_matrix[0]):
         # create column sum constraints
@@ -268,20 +242,18 @@ def create_column_sum_constraint(variable_matrix, x, expected_sum):
 def get_surrounding_variables(variable_matrix, x, y):
     '''
     given the indexes of an element of a matrix, return the values 
-    surrounding the element at that index, including diagonals
+    the variables to the left, above, to the upper left diagonal, and
+    to the upper right diagonal.
     '''
     surrounding_variables = []
-    for i in range(x - 1, x + 2):
-        for j in range(y - 1, y + 2):
-            # skip out of range indexes
-            if i < 0 or j < 0:
-                continue
-            if i >= len(variable_matrix):
-                continue
-            if j >= len(variable_matrix[i]):
-                continue
-
-            surrounding_variables.append(variable_matrix[i][j])
+    if x > 0:
+        surrounding_variables.append(variable_matrix[x - 1][y])
+    if y > 0:
+        surrounding_variables.append(variable_matrix[x][y - 1])
+    if x > 0 and y > 0:
+        surrounding_variables.append(variable_matrix[x - 1][y - 1])
+    if x < len(variable_matrix) - 1 and y > 0:
+        surrounding_variables.append(variable_matrix[x + 1][y - 1])
 
     return list(set(surrounding_variables))
 
