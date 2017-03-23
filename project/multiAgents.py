@@ -63,8 +63,24 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = gameState.getLegalActions(self.index)
+        successors = [gameState.generateSuccessor(self.index, action) for action in actions]
+        if self.index == 0:  # pacman
+            index_of_max_successor = -1
+            max_successor_score = float("-inf")
+            for index, successor in enumerate(successors):
+                if self.evaluationFunction(successor) > max_successor_score:
+                    max_successor_score = scoreEvaluationFunction(successor)
+                    index_of_max_successor = index
+            return actions[index_of_max_successor]
+        else:  # ghosts
+            index_of_min_successor = -1
+            min_successor_score = float("inf")
+            for index, successor in enumerate(successors):
+                if self.evaluationFunction(successor) < min_successor_score:
+                    min_successor_score = scoreEvaluationFunction(successor)
+                    index_of_min_successor = index
+            return actions[index_of_min_successor]
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -210,4 +226,3 @@ def betterEvaluationFunction(currentGameState):
 
 # Abbreviation
 better = betterEvaluationFunction
-
