@@ -11,7 +11,7 @@
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
-
+import copy
 import datetime
 from util import manhattanDistance
 from game import Directions
@@ -79,7 +79,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
             # terminal state
             return self.evaluationFunction(state)
 
-        scores = [self.minimax(state.generateSuccessor(agentIndex, action), depth + 1) for action in actions]
+        scores = [
+            self.minimax(state.generateSuccessor(agentIndex, action), depth + 1)
+            for action in actions
+        ]
         if agentIndex == 0:
             return max(scores)
         else:
@@ -90,13 +93,83 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
       Your minimax agent with alpha-beta pruning (question 3)
     """
-
     def getAction(self, gameState):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        selected_action = None
+        max_score = float("-inf")
+
+        alpha = float("-inf")
+        # one beta value for each ghost
+        betas = [float("inf") for _ in range(1, gameState.getNumAgents())]
+
+        for action in gameState.getLegalActions(0):
+            value = self.prunedMinimax(
+                gameState.generateSuccessor(0, action),
+                1,
+                alpha,
+                betas,
+            )
+            if value > max_score:
+                selected_action = action
+                max_score = value
+            alpha = max(alpha, max_score)
+        return selected_action
+
+    def prunedMinimax(self, state, depth, alpha, betas):
+        agentIndex = depth % state.getNumAgents()
+
+        actions = state.getLegalActions(agentIndex)
+        if not actions or depth == self.depth * state.getNumAgents():
+            # terminal state
+            return self.evaluationFunction(state)
+
+        if agentIndex == 0:
+            return self.max(state, depth, agentIndex, alpha, betas, actions)
+        else:
+            return self.min(state, depth, agentIndex, alpha, betas, actions)
+
+    def max(self, gameState, depth, agentIndex, alpha, betas, actions):
+        betas = copy.deepcopy(betas)
+
+        value = float("-inf")
+        for action in actions:
+            value = max(
+                value,
+                self.prunedMinimax(
+                    gameState.generateSuccessor(agentIndex, action),
+                    depth + 1,
+                    alpha,
+                    betas,
+                ),
+            )
+            if value > min(betas):
+                return value
+            alpha = max(alpha, value)
+        return value
+
+    def min(self, gameState, depth, agentIndex, alpha, betas, actions):
+        betas = copy.deepcopy(betas)
+
+        value = float("inf")
+        for action in actions:
+            value = min(
+                value,
+                self.prunedMinimax(
+                    gameState.generateSuccessor(agentIndex, action),
+                    depth + 1,
+                    alpha,
+                    betas,
+                ),
+            )
+            if value < alpha:
+                return value
+
+            # offset agentIndex
+            betas[agentIndex - 1] = min(betas[agentIndex - 1], value)
+        return value
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
