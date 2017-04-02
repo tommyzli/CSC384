@@ -63,24 +63,27 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        actions = gameState.getLegalActions(self.index)
-        successors = [gameState.generateSuccessor(self.index, action) for action in actions]
-        if self.index == 0:  # pacman
-            index_of_max_successor = -1
-            max_successor_score = float("-inf")
-            for index, successor in enumerate(successors):
-                if self.evaluationFunction(successor) > max_successor_score:
-                    max_successor_score = scoreEvaluationFunction(successor)
-                    index_of_max_successor = index
-            return actions[index_of_max_successor]
-        else:  # ghosts
-            index_of_min_successor = -1
-            min_successor_score = float("inf")
-            for index, successor in enumerate(successors):
-                if self.evaluationFunction(successor) < min_successor_score:
-                    min_successor_score = scoreEvaluationFunction(successor)
-                    index_of_min_successor = index
-            return actions[index_of_min_successor]
+        max_score = float("-inf")
+        selected_action = None
+        for action in gameState.getLegalActions(0):
+            value = self.minimax(gameState.generateSuccessor(0, action), 1)
+            if value > max_score:
+                max_score = value
+                selected_action = action
+        return selected_action
+
+    def minimax(self, state, depth):
+        agentIndex = depth % state.getNumAgents()
+        actions = state.getLegalActions(agentIndex)
+        if not actions or depth == self.depth * state.getNumAgents():
+            # terminal state
+            return self.evaluationFunction(state)
+
+        scores = [self.minimax(state.generateSuccessor(agentIndex, action), depth + 1) for action in actions]
+        if agentIndex == 0:
+            return max(scores)
+        else:
+            return min(scores)
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
