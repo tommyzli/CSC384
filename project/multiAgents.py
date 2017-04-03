@@ -13,6 +13,7 @@
 
 import copy
 import datetime
+import math
 from util import manhattanDistance
 from game import Directions
 import random, util
@@ -277,12 +278,41 @@ class MonteCarloAgent(MultiAgentSearchAgent):
         in its wins and plays dictionary, and returns best successor of gameState.
         """
         "*** YOUR CODE HERE ***"
+        legal = gameState.getLegalPacmanActions()
+
+        if not legal:
+            return
+        if len(legal) == 1:
+            return legal[0]
+
         games = 0
         begin = datetime.datetime.utcnow()
         while datetime.datetime.utcnow() - begin < self.calculation_time:
+            self.run_simulation(gameState)
             games += 1
 
-        util.raiseNotDefined()
+        moves_states = [(action, gameState.generatePacmanSuccessor(action)) for action in legal]
+
+        percent_wins, move = max(
+            (
+                self.wins.get(state, 0) /
+                self.plays.get(state, 1),
+                action
+            )
+            for action, state in moves_states
+        )
+
+        for x in sorted(
+            ((100 * self.wins.get(state, 0) /
+              self.plays.get(state, 1),
+              self.wins.get(state, 0),
+              self.plays.get(state, 0), action)
+             for action, state in moves_states),
+            reverse=True
+        ):
+            print "{3}: {0:.2f}% ({1} / {2})".format(*x)
+
+        return move
 
     def run_simulation(self, state):
         """
@@ -295,7 +325,48 @@ class MonteCarloAgent(MultiAgentSearchAgent):
         Updates values of appropriate states in search with with evaluation function.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        states_copy = copy.deepcopy(self.states)
+        state = states_copy[-1]
+        visited_states = set()
+        expand = True
+
+        for t in xrange(1, self.depth + 1):
+            legal = state.getLegalPacmanActions()
+            moves_states = [(action, state.generatePacmanSuccessor(action)) for action in legal]
+
+            if all(self.plays.get(s) for _, s in moves_states):
+                log_total = math.log(
+                    sum(self.plays[s] for _, s in moves_states)
+                )
+                value, move, state = max(
+                    ((self.wins[S] / self.plays[S]) +
+                     self.C * math.sqrt(log_total / self.plays[S]), p, S)
+                    for p, S in moves_states
+                )
+            else:
+                move, state = random.choice(moves_states)
+
+            states_copy.append(state)
+
+            if expand and state not in self.plays:
+                expand = False
+                self.plays[state] = 0
+                self.wins[state] = 0
+                if t > self.depth:
+                    self.depth = t
+
+            visited_states.add(state)
+
+            if state.isWin():
+                break
+
+        for state in visited_states:
+            if state not in self.plays:
+                continue
+
+            self.plays[state] += 1
+            if state.isWin():
+                self.wins[state] += 1
 
     def final(self, state):
         """
