@@ -326,11 +326,10 @@ class MonteCarloAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         states_copy = copy.deepcopy(self.states)
-        state = states_copy[-1]
         visited_states = set()
         expand = True
 
-        for t in xrange(1, self.depth + 1):
+        for t in xrange(1, self.C + 1):
             legal = state.getLegalPacmanActions()
             moves_states = [(action, state.generatePacmanSuccessor(action)) for action in legal]
 
